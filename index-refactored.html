@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IND 474 PONG DEATHMATCH - Refactorizado</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="game-board"></canvas>
+        
+        <div id="main-menu" class="menu">
+            <h1>IND 474 PONG DEATHMATCH</h1>
+            <div class="menu-buttons">
+                <button id="one-player">1 Jugador</button>
+                <button id="two-player">2 Jugadores</button>
+            </div>
+            <div class="controls">
+                <p>Jugador 1: W/S para mover, D para disparar, F para ráfaga</p>
+                <p>Jugador 2: ↑/↓ para mover, ← para disparar, → para ráfaga</p>
+            </div>
+        </div>
+        
+        <div id="game-over" class="menu game-over">
+            <h1 id="winner-text">¡GANASTE!</h1>
+            <div class="menu-buttons">
+                <button id="restart">Jugar de nuevo</button>
+                <button id="main-menu-btn">Menú principal</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts en orden de dependencia -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/paddle.js"></script>
+    <script src="js/ball.js"></script>
+    <script src="js/projectile.js"></script>
+    <script src="js/particles.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html> 
