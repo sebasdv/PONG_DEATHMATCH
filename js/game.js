@@ -15,12 +15,18 @@ class Game {
         this.lastTime = 0;
         this.animationId = null;
         
+        // Detectar dispositivo móvil
+        this.isMobile = this.detectMobile();
+        
         // Configurar canvas
         this.resizeCanvas();
         
         // Inicializar componentes
         this.initializeComponents();
         this.setupEventListeners();
+        
+        // Configurar controles móviles
+        this.setupMobileControls();
         
         // Mostrar menú principal
         this.showMainMenu();
@@ -65,6 +71,10 @@ class Game {
         
         // Evento de redimensionamiento
         window.addEventListener('resize', () => this.resizeCanvas());
+        
+        // Eventos de orientación para móviles
+        window.addEventListener('orientationchange', () => this.handleOrientationChange());
+        window.addEventListener('resize', () => this.handleOrientationChange());
     }
     
     handleKeyDown(e) {
@@ -81,23 +91,7 @@ class Game {
         }
     }
     
-    startGame(mode) {
-        this.gameMode = mode;
-        this.rightPaddle.isAI = (mode === 'one-player');
-        
-        this.mainMenu.style.display = 'none';
-        this.gameOverMenu.style.display = 'none';
-        this.gameRunning = true;
-        
-        this.resetGame();
-        
-        // Iniciar bucle del juego
-        this.lastTime = performance.now();
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-        }
-        this.gameLoop();
-    }
+
     
     resetGame() {
         this.gameState.leftScore = 0;
@@ -120,6 +114,10 @@ class Game {
         this.gameRunning = false;
         this.gameOverMenu.style.display = 'none';
         this.mainMenu.style.display = 'flex';
+        
+        // Ocultar controles táctiles
+        document.getElementById('touch-controls').style.display = 'none';
+        
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
@@ -316,6 +314,121 @@ class Game {
             this.rightPaddle.x = GAME_CONFIG.WIDTH - 20 - this.rightPaddle.width;
             this.rightPaddle.y = GAME_CONFIG.HEIGHT / 2 - this.rightPaddle.height / 2;
             this.ball.reset();
+        }
+    }
+    
+    // Métodos para dispositivos móviles
+    detectMobile() {
+        return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+               window.innerWidth <= 768;
+    }
+    
+    setupMobileControls() {
+        if (!this.isMobile) return;
+        
+        // Mostrar controles táctiles cuando el juego esté corriendo
+        const touchControls = document.getElementById('touch-controls');
+        
+        // Eventos para botones táctiles
+        document.querySelectorAll('.touch-controls button').forEach(button => {
+            const action = button.dataset.action;
+            const burstAction = button.dataset.burstAction;
+            
+            // Eventos táctiles
+            button.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.keys[action] = true;
+                
+                // Para disparos, usar temporizador para ráfagas
+                if (action === 'd' || action === 'left') {
+                    this.touchStartTime = Date.now();
+                }
+            });
+            
+            button.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.keys[action] = false;
+                
+                // Verificar si fue un disparo largo para ráfaga
+                if ((action === 'd' || action === 'left') && this.touchStartTime) {
+                    const touchDuration = Date.now() - this.touchStartTime;
+                    if (touchDuration > 500) {
+                        // Disparo largo = ráfaga
+                        this.keys[burstAction] = true;
+                        setTimeout(() => {
+                            this.keys[burstAction] = false;
+                        }, 100);
+                    }
+                    this.touchStartTime = null;
+                }
+            });
+            
+            // Eventos de mouse para desarrollo
+            button.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.keys[action] = true;
+            });
+            
+            button.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                this.keys[action] = false;
+            });
+        });
+    }
+    
+    handleOrientationChange() {
+        // Esperar un poco para que la orientación cambie
+        setTimeout(() => {
+            this.resizeCanvas();
+            this.updateOrientationWarning();
+        }, 100);
+    }
+    
+    updateOrientationWarning() {
+        const warning = document.getElementById('orientation-warning');
+        const isPortrait = window.innerHeight > window.innerWidth;
+        const isMobile = this.isMobile;
+        
+        if (isMobile && isPortrait) {
+            warning.style.display = 'flex';
+        } else {
+            warning.style.display = 'none';
+        }
+    }
+    
+    startGame(mode) {
+        this.gameMode = mode;
+        this.rightPaddle.isAI = (mode === 'one-player');
+        
+        this.mainMenu.style.display = 'none';
+        this.gameOverMenu.style.display = 'none';
+        this.gameRunning = true;
+        
+        // Mostrar controles táctiles en móviles
+        if (this.isMobile) {
+            document.getElementById('touch-controls').style.display = 'flex';
+        }
+        
+        this.resetGame();
+        
+        // Iniciar bucle del juego
+        this.lastTime = performance.now();
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+        }
+        this.gameLoop();
+    }
+    
+    showMainMenu() {
+        this.gameRunning = false;
+        this.gameOverMenu.style.display = 'none';
+        this.mainMenu.style.display = 'flex';
+        
+        // Ocultar controles táctiles
+        document.getElementById('touch-controls').style.display = 'none';
+        
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
         }
     }
 } 

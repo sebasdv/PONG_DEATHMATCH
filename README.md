@@ -11,18 +11,28 @@ Un juego de Pong moderno con mecánicas de disparo y combate, desarrollado en HT
 - **Sistema de Salud**: Las raquetas tienen salud y pueden ser destruidas
 - **Efectos Visuales**: Partículas y efectos visuales dinámicos
 - **Controles Intuitivos**: Controles fáciles de usar
+- **Soporte Móvil**: Controles táctiles optimizados para dispositivos móviles
+- **Responsive Design**: Se adapta automáticamente a diferentes tamaños de pantalla
 
 ## Controles
 
-### Jugador 1 (Izquierda)
+### Desktop
+#### Jugador 1 (Izquierda)
 - **W/S**: Mover raqueta arriba/abajo
 - **D**: Disparar proyectil
 - **F**: Disparar ráfaga (5 proyectiles)
 
-### Jugador 2 (Derecha)
+#### Jugador 2 (Derecha)
 - **↑/↓**: Mover raqueta arriba/abajo
 - **←**: Disparar proyectil
 - **→**: Disparar ráfaga (5 proyectiles)
+
+### Móvil
+- **Controles táctiles** en la parte inferior de la pantalla
+- **Botones de movimiento**: ↑/↓ para cada jugador
+- **Botón de disparo**: 🔥 para proyectil normal
+- **Botón de ráfaga**: 💥 para disparo múltiple
+- **Disparo largo**: Mantén presionado el botón de disparo para ráfaga
 
 ## Estructura del Proyecto
 
@@ -93,6 +103,8 @@ PONG_DEATHMATCH/
 - Console logs más específicos
 - Mejor experiencia de desarrollo
 
+
+
 ## Objetivos del Juego
 
 - **Victoria por Puntuación**: Llega a 5 puntos
@@ -113,6 +125,9 @@ PONG_DEATHMATCH/
 
 - El juego es completamente responsive
 - Funciona en todos los navegadores modernos
+- **Soporte completo para dispositivos móviles**
+- **Controles táctiles optimizados**
+- **Detección automática de orientación**
 - No requiere dependencias externas
 - Código optimizado para rendimiento
 

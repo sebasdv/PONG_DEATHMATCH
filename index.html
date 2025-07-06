@@ -2,13 +2,40 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>IND 474 PONG DEATHMATCH</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="game-container">
         <canvas id="game-board"></canvas>
+        
+        <!-- Controles táctiles para móviles -->
+        <div id="touch-controls" class="touch-controls">
+            <!-- Jugador izquierdo -->
+            <div class="player-controls left">
+                <button class="move-up" data-action="w" data-burst-action="f">↑</button>
+                <button class="move-down" data-action="s" data-burst-action="f">↓</button>
+                <button class="shoot" data-action="d">🔥</button>
+                <button class="burst" data-action="f">💥</button>
+            </div>
+            
+            <!-- Jugador derecho -->
+            <div class="player-controls right">
+                <button class="move-up" data-action="up" data-burst-action="right">↑</button>
+                <button class="move-down" data-action="down" data-burst-action="right">↓</button>
+                <button class="shoot" data-action="left">🔥</button>
+                <button class="burst" data-action="right">💥</button>
+            </div>
+        </div>
+        
+        <!-- Advertencia de orientación -->
+        <div id="orientation-warning" class="orientation-warning">
+            <div class="orientation-message">
+                <h2>📱 Gira tu dispositivo</h2>
+                <p>Para una mejor experiencia, gira tu dispositivo horizontalmente</p>
+            </div>
+        </div>
         
         <div id="main-menu" class="menu">
             <h1>IND 474 PONG DEATHMATCH</h1>
@@ -17,8 +44,9 @@
                 <button id="two-player">2 Jugadores</button>
             </div>
             <div class="controls">
-                <p>Jugador 1: W/S para mover, D para disparar, F para ráfaga</p>
-                <p>Jugador 2: ↑/↓ para mover, ← para disparar, → para ráfaga</p>
+                <p class="desktop-controls">Jugador 1: W/S para mover, D para disparar, F para ráfaga</p>
+                <p class="desktop-controls">Jugador 2: ↑/↓ para mover, ← para disparar, → para ráfaga</p>
+                <p class="mobile-controls">Usa los controles táctiles en la parte inferior</p>
             </div>
         </div>
         
