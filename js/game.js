@@ -311,9 +311,15 @@ class ParticleSystem {
             );
             
             if (particle.fade) {
-                gradient.addColorStop(0, `${particle.color}ff`);
-                gradient.addColorStop(0.5, `${particle.color}${Math.floor(alpha * 255).toString(16).padStart(2, '0')}`);
-                gradient.addColorStop(1, `${particle.color}00`);
+                // Convertir color hex a rgba
+                const hex = particle.color.replace('#', '');
+                const r = parseInt(hex.substr(0, 2), 16);
+                const g = parseInt(hex.substr(2, 2), 16);
+                const b = parseInt(hex.substr(4, 2), 16);
+                
+                gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, 1)`);
+                gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${alpha})`);
+                gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
             } else {
                 gradient.addColorStop(0, particle.color);
                 gradient.addColorStop(1, particle.color);
