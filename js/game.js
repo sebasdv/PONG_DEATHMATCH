@@ -1,3 +1,320 @@
+// Configuración del juego
+const GAME_CONFIG = {
+    WIDTH: 800,
+    HEIGHT: 500,
+    PADDLE: {
+        WIDTH: 15,
+        HEIGHT: 100,
+        SPEED: 400,
+        MAX_COOLDOWN: 0.8,
+        MAX_BURST_COOLDOWN: 4.0
+    },
+    BALL: {
+        SIZE: 20,
+        SPEED: 300
+    },
+    PROJECTILE: {
+        SPEED: 400,
+        SIZE: 8
+    },
+    PARTICLE: {
+        DEFAULT_COUNT: 10,
+        DEFAULT_LIFE: 0.5
+    },
+    MAX_SCORE: 5,
+    INITIAL_HEALTH: 100,
+    PROJECTILE_DAMAGE: 10
+};
+
+// Clase Paddle (Raqueta)
+class Paddle {
+    constructor(x, y, side) {
+        this.x = x;
+        this.y = y;
+        this.width = GAME_CONFIG.PADDLE.WIDTH;
+        this.height = GAME_CONFIG.PADDLE.HEIGHT;
+        this.speed = GAME_CONFIG.PADDLE.SPEED;
+        this.side = side;
+        this.health = GAME_CONFIG.INITIAL_HEALTH;
+        this.isAI = false;
+        
+        // Cooldowns para disparos
+        this.shootCooldown = 0;
+        this.burstCooldown = 0;
+    }
+    
+    reset() {
+        this.health = GAME_CONFIG.INITIAL_HEALTH;
+        this.shootCooldown = 0;
+        this.burstCooldown = 0;
+    }
+    
+    canShoot() {
+        return this.shootCooldown <= 0;
+    }
+    
+    canBurst() {
+        return this.burstCooldown <= 0;
+    }
+    
+    update(deltaTime) {
+        if (this.shootCooldown > 0) {
+            this.shootCooldown -= deltaTime;
+        }
+        if (this.burstCooldown > 0) {
+            this.burstCooldown -= deltaTime;
+        }
+    }
+    
+    draw(ctx) {
+        // Dibujar raqueta
+        ctx.fillStyle = this.health > 0 ? 'white' : 'red';
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+        
+        // Dibujar barra de salud
+        const healthBarWidth = this.width;
+        const healthBarHeight = 5;
+        const healthPercentage = this.health / GAME_CONFIG.INITIAL_HEALTH;
+        
+        ctx.fillStyle = 'red';
+        ctx.fillRect(this.x, this.y - 10, healthBarWidth, healthBarHeight);
+        ctx.fillStyle = 'green';
+        ctx.fillRect(this.x, this.y - 10, healthBarWidth * healthPercentage, healthBarHeight);
+    }
+}
+
+// Clase Ball (Pelota)
+class Ball {
+    constructor() {
+        this.reset();
+    }
+    
+    reset() {
+        this.x = GAME_CONFIG.WIDTH / 2;
+        this.y = GAME_CONFIG.HEIGHT / 2;
+        this.size = GAME_CONFIG.BALL.SIZE;
+        this.speed = GAME_CONFIG.BALL.SPEED;
+        this.vx = this.speed * (Math.random() > 0.5 ? 1 : -1);
+        this.vy = (Math.random() - 0.5) * this.speed * 0.5;
+    }
+    
+    update(deltaTime) {
+        this.x += this.vx * deltaTime;
+        this.y += this.vy * deltaTime;
+        
+        // Colisión con paredes superior e inferior
+        if (this.y <= this.size || this.y >= GAME_CONFIG.HEIGHT - this.size) {
+            this.vy = -this.vy;
+        }
+    }
+    
+    checkPaddleCollision(paddle, particleSystem) {
+        if (this.x < paddle.x + paddle.width && 
+            this.x + this.size > paddle.x &&
+            this.y < paddle.y + paddle.height &&
+            this.y + this.size > paddle.y) {
+            
+            // Determinar dirección de rebote
+            if (this.x < GAME_CONFIG.WIDTH / 2) {
+                this.vx = Math.abs(this.vx);
+            } else {
+                this.vx = -Math.abs(this.vx);
+            }
+            
+            // Ajustar velocidad vertical basada en dónde golpeó la raqueta
+            const hitPoint = (this.y - paddle.y) / paddle.height;
+            this.vy = (hitPoint - 0.5) * this.speed;
+            
+            // Crear partículas
+            if (particleSystem) {
+                particleSystem.createExplosion(this.x, this.y, 5);
+            }
+        }
+    }
+    
+    draw(ctx) {
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// Clase ProjectileSystem (Sistema de Proyectiles)
+class ProjectileSystem {
+    constructor() {
+        this.projectiles = [];
+    }
+    
+    clear() {
+        this.projectiles = [];
+    }
+    
+    fireProjectile(side, paddle) {
+        if (!paddle.canShoot()) return;
+        
+        const projectile = {
+            x: side === 'left' ? paddle.x + paddle.width : paddle.x,
+            y: paddle.y + paddle.height / 2,
+            vx: side === 'left' ? GAME_CONFIG.PROJECTILE.SPEED : -GAME_CONFIG.PROJECTILE.SPEED,
+            vy: 0,
+            size: GAME_CONFIG.PROJECTILE.SIZE
+        };
+        
+        this.projectiles.push(projectile);
+        paddle.shootCooldown = GAME_CONFIG.PADDLE.MAX_COOLDOWN;
+    }
+    
+    fireBurst(side, paddle) {
+        if (!paddle.canBurst()) return;
+        
+        for (let i = 0; i < 5; i++) {
+            const projectile = {
+                x: side === 'left' ? paddle.x + paddle.width : paddle.x,
+                y: paddle.y + 20 + (i * 15),
+                vx: side === 'left' ? GAME_CONFIG.PROJECTILE.SPEED : -GAME_CONFIG.PROJECTILE.SPEED,
+                vy: (Math.random() - 0.5) * 100,
+                size: GAME_CONFIG.PROJECTILE.SIZE
+            };
+            this.projectiles.push(projectile);
+        }
+        
+        paddle.burstCooldown = GAME_CONFIG.PADDLE.MAX_BURST_COOLDOWN;
+    }
+    
+    update(deltaTime) {
+        this.projectiles = this.projectiles.filter(proj => {
+            proj.x += proj.vx * deltaTime;
+            proj.y += proj.vy * deltaTime;
+            
+            // Eliminar proyectiles fuera de pantalla
+            return proj.x > 0 && proj.x < GAME_CONFIG.WIDTH && 
+                   proj.y > 0 && proj.y < GAME_CONFIG.HEIGHT;
+        });
+    }
+    
+    checkCollisions(leftPaddle, rightPaddle, particleSystem) {
+        this.projectiles.forEach(proj => {
+            // Colisión con raqueta izquierda
+            if (proj.x < leftPaddle.x + leftPaddle.width &&
+                proj.x + proj.size > leftPaddle.x &&
+                proj.y < leftPaddle.y + leftPaddle.height &&
+                proj.y + proj.size > leftPaddle.y) {
+                
+                leftPaddle.health -= GAME_CONFIG.PROJECTILE_DAMAGE;
+                if (particleSystem) {
+                    particleSystem.createExplosion(proj.x, proj.y, 8);
+                }
+                proj.x = -100; // Marcar para eliminación
+            }
+            
+            // Colisión con raqueta derecha
+            if (proj.x < rightPaddle.x + rightPaddle.width &&
+                proj.x + proj.size > rightPaddle.x &&
+                proj.y < rightPaddle.y + rightPaddle.height &&
+                proj.y + proj.size > rightPaddle.y) {
+                
+                rightPaddle.health -= GAME_CONFIG.PROJECTILE_DAMAGE;
+                if (particleSystem) {
+                    particleSystem.createExplosion(proj.x, proj.y, 8);
+                }
+                proj.x = -100; // Marcar para eliminación
+            }
+        });
+        
+        // Eliminar proyectiles marcados
+        this.projectiles = this.projectiles.filter(proj => proj.x > -50);
+    }
+    
+    draw(ctx) {
+        ctx.fillStyle = 'red';
+        this.projectiles.forEach(proj => {
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, proj.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
+}
+
+// Clase ParticleSystem (Sistema de Partículas)
+class ParticleSystem {
+    constructor() {
+        this.particles = [];
+    }
+    
+    clear() {
+        this.particles = [];
+    }
+    
+    createExplosion(x, y, count = 10) {
+        for (let i = 0; i < count; i++) {
+            this.particles.push({
+                x: x,
+                y: y,
+                vx: (Math.random() - 0.5) * 200,
+                vy: (Math.random() - 0.5) * 200,
+                life: GAME_CONFIG.PARTICLE.DEFAULT_LIFE,
+                maxLife: GAME_CONFIG.PARTICLE.DEFAULT_LIFE
+            });
+        }
+    }
+    
+    update(deltaTime) {
+        this.particles = this.particles.filter(particle => {
+            particle.x += particle.vx * deltaTime;
+            particle.y += particle.vy * deltaTime;
+            particle.life -= deltaTime;
+            
+            return particle.life > 0;
+        });
+    }
+    
+    draw(ctx) {
+        this.particles.forEach(particle => {
+            const alpha = particle.life / particle.maxLife;
+            ctx.fillStyle = `rgba(255, 200, 100, ${alpha})`;
+            ctx.fillRect(particle.x, particle.y, 3, 3);
+        });
+    }
+}
+
+// Clase AI (Inteligencia Artificial)
+class AI {
+    constructor(paddle, ball) {
+        this.paddle = paddle;
+        this.ball = ball;
+        this.difficulty = 0.8; // 0 = fácil, 1 = difícil
+    }
+    
+    update(deltaTime) {
+        if (!this.paddle.isAI) return;
+        
+        // Predicción simple de la posición de la pelota
+        const targetY = this.ball.y;
+        const currentY = this.paddle.y + this.paddle.height / 2;
+        
+        // Mover hacia la pelota con cierta dificultad
+        if (Math.random() < this.difficulty) {
+            if (targetY < currentY - 10) {
+                this.paddle.y -= this.paddle.speed * deltaTime;
+            } else if (targetY > currentY + 10) {
+                this.paddle.y += this.paddle.speed * deltaTime;
+            }
+        }
+        
+        // Mantener la raqueta dentro de los límites
+        if (this.paddle.y < 0) this.paddle.y = 0;
+        if (this.paddle.y + this.paddle.height > GAME_CONFIG.HEIGHT) {
+            this.paddle.y = GAME_CONFIG.HEIGHT - this.paddle.height;
+        }
+        
+        // Disparar ocasionalmente
+        if (Math.random() < 0.01 && this.paddle.canShoot()) {
+            // La lógica de disparo se maneja en el sistema de proyectiles
+        }
+    }
+}
+
 // Clase principal del juego
 class Game {
     constructor() {
@@ -135,6 +452,10 @@ class Game {
     }
     
     update(deltaTime) {
+        // Actualizar raquetas
+        this.leftPaddle.update(deltaTime);
+        this.rightPaddle.update(deltaTime);
+        
         // Actualizar controles de jugadores
         this.updatePlayerControls(deltaTime);
         
