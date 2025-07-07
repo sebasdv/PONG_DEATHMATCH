@@ -15,7 +15,7 @@ const GAME_CONFIG = {
     
     // Configuración de la pelota
     BALL: {
-        SIZE: 20,
+        SIZE: 12, // Reducido de 20 a 12 para mejor proporción
         SPEED: 350 // Aumentado para más dinamismo
     },
     
