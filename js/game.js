@@ -583,7 +583,7 @@ class Game {
         if (this.keys.d && this.leftPaddle.canShoot()) {
             this.projectileSystem.fireProjectile('left', this.leftPaddle);
         }
-        if (this.keys.left && this.rightPaddle.canShoot() && !this.rightPaddle.isAI) {
+        if (this.keys.right && this.rightPaddle.canShoot() && !this.rightPaddle.isAI) {
             this.projectileSystem.fireProjectile('right', this.rightPaddle);
         }
         
@@ -591,7 +591,7 @@ class Game {
         if (this.keys.f && this.leftPaddle.canBurst()) {
             this.projectileSystem.fireBurst('left', this.leftPaddle);
         }
-        if (this.keys.right && this.rightPaddle.canBurst() && !this.rightPaddle.isAI) {
+        if (this.keys.left && this.rightPaddle.canBurst() && !this.rightPaddle.isAI) {
             this.projectileSystem.fireBurst('right', this.rightPaddle);
         }
     }
@@ -681,8 +681,8 @@ class Game {
         this.ctx.font = '12px Arial';
         this.ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         this.ctx.textAlign = 'left';
-        this.ctx.fillText("Disparo normal: D / ←", 10, GAME_CONFIG.HEIGHT - 40);
-        this.ctx.fillText("Ráfaga: F / →", 10, GAME_CONFIG.HEIGHT - 25);
+        this.ctx.fillText("Disparo normal: D / →", 10, GAME_CONFIG.HEIGHT - 40);
+        this.ctx.fillText("Ráfaga: F / ←", 10, GAME_CONFIG.HEIGHT - 25);
         this.ctx.fillText("Movimiento: W,S / ↑,↓", 10, GAME_CONFIG.HEIGHT - 10);
         
         // Información de depuración
@@ -754,7 +754,7 @@ class Game {
                 this.keys[action] = true;
                 
                 // Para disparos, usar temporizador para ráfagas
-                if (action === 'd' || action === 'left') {
+                if (action === 'd' || action === 'right') {
                     this.touchStartTime = Date.now();
                 }
             });
@@ -764,7 +764,7 @@ class Game {
                 this.keys[action] = false;
                 
                 // Verificar si fue un disparo largo para ráfaga
-                if ((action === 'd' || action === 'left') && this.touchStartTime) {
+                if ((action === 'd' || action === 'right') && this.touchStartTime) {
                     const touchDuration = Date.now() - this.touchStartTime;
                     if (touchDuration > 500) {
                         // Disparo largo = ráfaga
