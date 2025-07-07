@@ -451,15 +451,39 @@ class Game {
     
     handleKeyDown(e) {
         const key = e.key.toLowerCase();
-        if (this.keys.hasOwnProperty(key)) {
-            this.keys[key] = true;
+        // Mapear teclas de flecha a nombres más simples
+        const keyMap = {
+            'arrowup': 'up',
+            'arrowdown': 'down',
+            'arrowleft': 'left',
+            'arrowright': 'right'
+        };
+        
+        const mappedKey = keyMap[key] || key;
+        
+        if (this.keys.hasOwnProperty(mappedKey)) {
+            this.keys[mappedKey] = true;
+            // Prevenir comportamiento por defecto para teclas del juego
+            if (['w', 's', 'd', 'f', 'up', 'down', 'left', 'right'].includes(mappedKey)) {
+                e.preventDefault();
+            }
         }
     }
     
     handleKeyUp(e) {
         const key = e.key.toLowerCase();
-        if (this.keys.hasOwnProperty(key)) {
-            this.keys[key] = false;
+        // Mapear teclas de flecha a nombres más simples
+        const keyMap = {
+            'arrowup': 'up',
+            'arrowdown': 'down',
+            'arrowleft': 'left',
+            'arrowright': 'right'
+        };
+        
+        const mappedKey = keyMap[key] || key;
+        
+        if (this.keys.hasOwnProperty(mappedKey)) {
+            this.keys[mappedKey] = false;
         }
     }
     
@@ -660,6 +684,13 @@ class Game {
         this.ctx.fillText("Disparo normal: D / ←", 10, GAME_CONFIG.HEIGHT - 40);
         this.ctx.fillText("Ráfaga: F / →", 10, GAME_CONFIG.HEIGHT - 25);
         this.ctx.fillText("Movimiento: W,S / ↑,↓", 10, GAME_CONFIG.HEIGHT - 10);
+        
+        // Información de depuración
+        this.ctx.fillStyle = 'rgba(255, 255, 0, 0.7)';
+        this.ctx.fillText(`Modo: ${this.gameMode}`, 10, 20);
+        this.ctx.fillText(`IA: ${this.rightPaddle.isAI ? 'ON' : 'OFF'}`, 10, 35);
+        this.ctx.fillText(`J2 UP: ${this.keys.up}`, 10, 50);
+        this.ctx.fillText(`J2 DOWN: ${this.keys.down}`, 10, 65);
     }
     
     gameLoop() {
@@ -782,6 +813,10 @@ class Game {
     startGame(mode) {
         this.gameMode = mode;
         this.rightPaddle.isAI = (mode === 'one-player');
+        
+        // Debug: verificar configuración
+        console.log(`Modo de juego: ${mode}`);
+        console.log(`IA activada: ${this.rightPaddle.isAI}`);
         
         this.mainMenu.style.display = 'none';
         this.gameOverMenu.style.display = 'none';
