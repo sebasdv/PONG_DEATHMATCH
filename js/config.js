@@ -8,27 +8,27 @@ const GAME_CONFIG = {
     PADDLE: {
         WIDTH: 15,
         HEIGHT: 100,
-        SPEED: 400,
-        MAX_COOLDOWN: 0.8,
-        MAX_BURST_COOLDOWN: 4.0
+        SPEED: 500, // Aumentado para mejor respuesta
+        MAX_COOLDOWN: 0.6, // Reducido para más acción
+        MAX_BURST_COOLDOWN: 3.0 // Reducido para más acción
     },
     
     // Configuración de la pelota
     BALL: {
         SIZE: 20,
-        SPEED: 300
+        SPEED: 350 // Aumentado para más dinamismo
     },
     
     // Configuración de proyectiles
     PROJECTILE: {
-        SPEED: 400,
+        SPEED: 450, // Aumentado para mejor respuesta
         SIZE: 8
     },
     
     // Configuración de partículas
     PARTICLE: {
-        DEFAULT_COUNT: 10,
-        DEFAULT_LIFE: 0.5
+        DEFAULT_COUNT: 15, // Aumentado para mejor efecto visual
+        DEFAULT_LIFE: 0.8 // Aumentado para partículas más duraderas
     },
     
     // Puntuación

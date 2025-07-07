@@ -32,12 +32,17 @@ class Paddle {
     }
     
     update(deltaTime) {
+        // Reducir cooldowns con mejor precisión
         if (this.shootCooldown > 0) {
             this.shootCooldown -= deltaTime;
         }
         if (this.burstCooldown > 0) {
             this.burstCooldown -= deltaTime;
         }
+        
+        // Asegurar que los cooldowns no sean negativos
+        this.shootCooldown = Math.max(0, this.shootCooldown);
+        this.burstCooldown = Math.max(0, this.burstCooldown);
     }
     
     draw(ctx) {
@@ -73,12 +78,17 @@ class Ball {
     }
     
     update(deltaTime) {
+        // Aplicar velocidad con física mejorada
         this.x += this.vx * deltaTime;
         this.y += this.vy * deltaTime;
         
-        // Colisión con paredes superior e inferior
-        if (this.y <= this.size || this.y >= GAME_CONFIG.HEIGHT - this.size) {
-            this.vy = -this.vy;
+        // Colisión con paredes superior e inferior con mejor respuesta
+        if (this.y <= this.size) {
+            this.y = this.size;
+            this.vy = Math.abs(this.vy);
+        } else if (this.y >= GAME_CONFIG.HEIGHT - this.size) {
+            this.y = GAME_CONFIG.HEIGHT - this.size;
+            this.vy = -Math.abs(this.vy);
         }
     }
     
@@ -161,6 +171,11 @@ class ProjectileSystem {
             proj.x += proj.vx * deltaTime;
             proj.y += proj.vy * deltaTime;
             
+            // Crear partículas de estela
+            if (window.game && window.game.particleSystem) {
+                window.game.particleSystem.createTrail(proj.x, proj.y, proj.vx, proj.vy);
+            }
+            
             // Eliminar proyectiles fuera de pantalla
             return proj.x > 0 && proj.x < GAME_CONFIG.WIDTH && 
                    proj.y > 0 && proj.y < GAME_CONFIG.HEIGHT;
@@ -177,7 +192,7 @@ class ProjectileSystem {
                 
                 leftPaddle.health -= GAME_CONFIG.PROJECTILE_DAMAGE;
                 if (particleSystem) {
-                    particleSystem.createExplosion(proj.x, proj.y, 8);
+                    particleSystem.createExplosion(proj.x, proj.y, 12, 'hit');
                 }
                 proj.x = -100; // Marcar para eliminación
             }
@@ -190,7 +205,7 @@ class ProjectileSystem {
                 
                 rightPaddle.health -= GAME_CONFIG.PROJECTILE_DAMAGE;
                 if (particleSystem) {
-                    particleSystem.createExplosion(proj.x, proj.y, 8);
+                    particleSystem.createExplosion(proj.x, proj.y, 12, 'hit');
                 }
                 proj.x = -100; // Marcar para eliminación
             }
@@ -210,34 +225,75 @@ class ProjectileSystem {
     }
 }
 
-// Clase ParticleSystem (Sistema de Partículas)
+// Clase ParticleSystem (Sistema de Partículas Mejorado)
 class ParticleSystem {
     constructor() {
         this.particles = [];
+        this.maxParticles = 200; // Límite para rendimiento
     }
     
     clear() {
         this.particles = [];
     }
     
-    createExplosion(x, y, count = 10) {
+    createExplosion(x, y, count = 15, type = 'normal') {
+        // Limitar partículas para rendimiento
+        if (this.particles.length > this.maxParticles) {
+            this.particles = this.particles.slice(-this.maxParticles / 2);
+        }
+        
         for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count;
+            const speed = 150 + Math.random() * 100;
+            
             this.particles.push({
-                x: x,
-                y: y,
-                vx: (Math.random() - 0.5) * 200,
-                vy: (Math.random() - 0.5) * 200,
-                life: GAME_CONFIG.PARTICLE.DEFAULT_LIFE,
-                maxLife: GAME_CONFIG.PARTICLE.DEFAULT_LIFE
+                x: x + (Math.random() - 0.5) * 10,
+                y: y + (Math.random() - 0.5) * 10,
+                vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 50,
+                vy: Math.sin(angle) * speed + (Math.random() - 0.5) * 50,
+                life: 0.8 + Math.random() * 0.4,
+                maxLife: 0.8 + Math.random() * 0.4,
+                size: 2 + Math.random() * 3,
+                color: type === 'hit' ? '#ff4444' : '#ffaa55',
+                gravity: 300,
+                fade: true
+            });
+        }
+    }
+    
+    createTrail(x, y, vx, vy) {
+        // Crear partículas de estela para proyectiles
+        for (let i = 0; i < 3; i++) {
+            this.particles.push({
+                x: x + (Math.random() - 0.5) * 5,
+                y: y + (Math.random() - 0.5) * 5,
+                vx: vx * 0.1 + (Math.random() - 0.5) * 20,
+                vy: vy * 0.1 + (Math.random() - 0.5) * 20,
+                life: 0.3 + Math.random() * 0.2,
+                maxLife: 0.3 + Math.random() * 0.2,
+                size: 1 + Math.random() * 2,
+                color: '#ff6666',
+                gravity: 0,
+                fade: true
             });
         }
     }
     
     update(deltaTime) {
         this.particles = this.particles.filter(particle => {
+            // Aplicar gravedad
+            particle.vy += particle.gravity * deltaTime;
+            
+            // Actualizar posición
             particle.x += particle.vx * deltaTime;
             particle.y += particle.vy * deltaTime;
+            
+            // Reducir vida
             particle.life -= deltaTime;
+            
+            // Reducir velocidad por fricción
+            particle.vx *= 0.98;
+            particle.vy *= 0.98;
             
             return particle.life > 0;
         });
@@ -246,8 +302,27 @@ class ParticleSystem {
     draw(ctx) {
         this.particles.forEach(particle => {
             const alpha = particle.life / particle.maxLife;
-            ctx.fillStyle = `rgba(255, 200, 100, ${alpha})`;
-            ctx.fillRect(particle.x, particle.y, 3, 3);
+            const size = particle.size * alpha;
+            
+            // Crear gradiente para partículas
+            const gradient = ctx.createRadialGradient(
+                particle.x, particle.y, 0,
+                particle.x, particle.y, size
+            );
+            
+            if (particle.fade) {
+                gradient.addColorStop(0, `${particle.color}ff`);
+                gradient.addColorStop(0.5, `${particle.color}${Math.floor(alpha * 255).toString(16).padStart(2, '0')}`);
+                gradient.addColorStop(1, `${particle.color}00`);
+            } else {
+                gradient.addColorStop(0, particle.color);
+                gradient.addColorStop(1, particle.color);
+            }
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, size, 0, Math.PI * 2);
+            ctx.fill();
         });
     }
 }
@@ -426,6 +501,9 @@ class Game {
     }
     
     update(deltaTime) {
+        // Limitar deltaTime para evitar saltos grandes
+        deltaTime = Math.min(deltaTime, 1/30); // Máximo 30 FPS equivalente
+        
         // Actualizar raquetas
         this.leftPaddle.update(deltaTime);
         this.rightPaddle.update(deltaTime);
@@ -438,7 +516,7 @@ class Game {
             this.ai.update(deltaTime);
         }
         
-        // Actualizar pelota
+        // Actualizar pelota con física mejorada
         this.ball.update(deltaTime);
         
         // Verificar colisiones
@@ -585,9 +663,13 @@ class Game {
         const deltaTime = (currentTime - this.lastTime) / 1000;
         this.lastTime = currentTime;
         
+        // Actualizar lógica del juego
         this.update(deltaTime);
+        
+        // Dibujar frame
         this.draw();
         
+        // Programar siguiente frame
         this.animationId = requestAnimationFrame(() => this.gameLoop());
     }
     
