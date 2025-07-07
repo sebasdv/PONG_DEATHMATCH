@@ -145,6 +145,9 @@ class ProjectileSystem {
             size: GAME_CONFIG.PROJECTILE.SIZE
         };
         
+        // Debug: información del proyectil
+        console.log(`Disparo: lado=${side}, x=${projectile.x}, vx=${projectile.vx}, paddle.x=${paddle.x}`);
+        
         this.projectiles.push(projectile);
         paddle.shootCooldown = GAME_CONFIG.PADDLE.MAX_COOLDOWN;
     }
@@ -691,6 +694,9 @@ class Game {
         this.ctx.fillText(`IA: ${this.rightPaddle.isAI ? 'ON' : 'OFF'}`, 10, 35);
         this.ctx.fillText(`J2 UP: ${this.keys.up}`, 10, 50);
         this.ctx.fillText(`J2 DOWN: ${this.keys.down}`, 10, 65);
+        this.ctx.fillText(`J1 X: ${Math.round(this.leftPaddle.x)}`, 10, 80);
+        this.ctx.fillText(`J2 X: ${Math.round(this.rightPaddle.x)}`, 10, 95);
+        this.ctx.fillText(`Proyectiles: ${this.projectileSystem.projectiles.length}`, 10, 110);
     }
     
     gameLoop() {
