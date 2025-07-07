@@ -1,30 +1,4 @@
-// Configuración del juego
-const GAME_CONFIG = {
-    WIDTH: 800,
-    HEIGHT: 500,
-    PADDLE: {
-        WIDTH: 15,
-        HEIGHT: 100,
-        SPEED: 400,
-        MAX_COOLDOWN: 0.8,
-        MAX_BURST_COOLDOWN: 4.0
-    },
-    BALL: {
-        SIZE: 20,
-        SPEED: 300
-    },
-    PROJECTILE: {
-        SPEED: 400,
-        SIZE: 8
-    },
-    PARTICLE: {
-        DEFAULT_COUNT: 10,
-        DEFAULT_LIFE: 0.5
-    },
-    MAX_SCORE: 5,
-    INITIAL_HEALTH: 100,
-    PROJECTILE_DAMAGE: 10
-};
+
 
 // Clase Paddle (Raqueta)
 class Paddle {
